@@ -2,11 +2,18 @@
   "name": "@terran-one/cw-check",
   "version": "1.0.0",
   "description": "cw-check verifies if the Wasm binary is a proper smart contract that's ready to be uploaded to the blockchain.",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "repository": "https://github.com/Terran-One/cw-check",
-  "author": "bun@terran.one",
+  "author": "Terran One LLC",
   "license": "MIT",
   "private": false,
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "@types/jest": "^29.2.3",
     "ts-jest": "^29.0.3",
@@ -22,6 +29,7 @@
   "scripts": {
     "test": "jest --verbose --coverage",
     "build": "tsc --module commonjs",
-    "check": "ts-node src/index.ts"
+    "check": "ts-node src/index.ts",
+    "prepublishOnly": "yarn build"
   }
 }
