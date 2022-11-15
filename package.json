@@ -15,11 +15,12 @@
   },
   "dependencies": {
     "commander": "^9.4.1",
+    "jest": "^29.3.1",
     "ts-results": "^3.3.0",
     "tslib": "^2.4.1"
   },
   "scripts": {
-    "test": "jest",
+    "test": "ts-jest",
     "build": "tsc",
     "start": "ts-node src/index.ts"
   }

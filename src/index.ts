@@ -33,7 +33,7 @@ const REQUIRED_EXPORTS = [
   "instantiate"
 ];
 
-export async function check_contract(path: string, availableCapabilities: string[]) {
+export async function check_contract(path: string, availableCapabilities: string[]): Promise<Result<any, string>> {
   // Check if file exists
   if (!fs.existsSync(path)) {
     console.error(`File ${path} does not exist`);
@@ -42,10 +42,15 @@ export async function check_contract(path: string, availableCapabilities: string
   const contents = fs.readFileSync(path);
 
   // Check Wasm
-  await check_wasm(contents, availableCapabilities);
+  const wasm = await check_wasm(contents, availableCapabilities);
+  if (wasm.err) {
+    return Promise.reject(wasm.val);
+  }
 
   // Compile module
   compile(contents);
+
+  return Promise.resolve(Ok(undefined));
 }
 
 export async function check_wasm(wasmBuffer: Buffer, availableCapabilities: string[]): Promise<Result<void, string>> {
@@ -105,7 +110,7 @@ export function check_interface_version(module: WebAssembly.Module): Result<void
     return Err('Wasm contract contains more than one marker export: interface_version_*');
   } else {
     const interfaceVersion = interfaceVersionExports[0];
-    if (SUPPORTED_INTERFACE_VERSIONS.indexOf(interfaceVersion.name)) {
+    if (!SUPPORTED_INTERFACE_VERSIONS.includes(interfaceVersion.name)) {
       return Err('Wasm contract has unknown interface_version_* marker export (see https://github.com/CosmWasm/cosmwasm/blob/main/packages/vm/README.md)');
     } else {
       return Ok(undefined)
@@ -120,7 +125,7 @@ export function check_wasm_exports(module: WebAssembly.Module): Result<void, str
     if (!exports.some((exported) => exported.name === requiredExport)) {
       return Err(`Wasm contract doesn't have required export: \"${requiredExport}\". Exports required by VM: ${REQUIRED_EXPORTS}.`);
     } else {
-      return Ok({});
+      return Ok(undefined);
     }
   });
 
@@ -134,16 +139,16 @@ export function check_wasm_imports(module: WebAssembly.Module): Result<void, str
     if (!imports.some((imported) => `${imported.module}.${imported.name}` === supportedImport)) {
       return Err(`Wasm contract doesn't have required import: \"${supportedImport}\". Imports required by VM: ${SUPPORTED_IMPORTS}.`);
     } else {
-      return Ok({});
+      return Ok(undefined);
     }
   });
 
   return Ok(undefined);
 }
 
-export function compile(contents: Buffer) {
-  // Compile module
-  console.log(contents);
+export function compile(contents: Buffer): Ok<WebAssembly.Module> {
+  const module = new WebAssembly.Module(contents);
+  return Ok(module);
 }
 
 export function check_wasm_capabilities(module: WebAssembly.Module, availableCapabilities: string[]): Result<void, string> {
@@ -152,18 +157,21 @@ export function check_wasm_capabilities(module: WebAssembly.Module, availableCap
   return Ok(undefined);
 }
 
-try {
-  const command: Command = program
-  .version('0.0.1')
-  .description('A CLI to verify the CosmWasm contract validity');
+// Only run this script if it is called directly
+if (require.main === module) {
+  try {
+    const command: Command = program
+    .version('0.0.1')
+    .description('A CLI to verify the CosmWasm contract validity');
 
-  command.argument('<path>', 'Path to the contract');
-  command.description('Check the contract');
-  command.action(async (path: string) => {
-    await check_contract(path, ['all']);
-  });
+    command.argument('<path>', 'Path to the contract');
+    command.description('Check the contract');
+    command.action(async (path: string) => {
+      await check_contract(path, []);
+    });
 
-  program.parse(process.argv);
-} catch (error) {
-  console.error(error);
+    program.parse(process.argv);
+  } catch (error) {
+    console.error(error);
+  }
 }
