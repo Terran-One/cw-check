@@ -4,10 +4,6 @@ import { Command, program } from 'commander';
 import * as fs from "fs";
 import { Err, Ok, Result } from "ts-results";
 
-process.on('unhandledRejection', (error: Error) => {
-  console.error(error);
-});
-
 const SUPPORTED_INTERFACE_VERSIONS = ["interface_version_7", "interface_version_8"];
 const SUPPORTED_IMPORTS = [
   "env.abort",
