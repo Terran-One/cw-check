@@ -53,30 +53,30 @@ export async function check_wasm(wasmBuffer: Buffer, availableCapabilities: stri
   const module = await WebAssembly.compile(wasmBuffer);
   const memories = check_wasm_memories(module);
   if (memories.err) {
-    return Promise.reject(Err(memories.unwrap()));
+    return memories;
   }
 
   const version = check_interface_version(module);
   if (version.err) {
-    return Promise.reject(Err(version.unwrap()));
+    return version;
   }
 
   const exports = check_wasm_exports(module);
   if (exports.err) {
-    return Promise.reject(Err(exports.unwrap()));
+    return exports;
   }
 
   const imports = check_wasm_imports(module);
   if (imports.err) {
-    return Promise.reject(Err(imports.unwrap()));
+    return imports;
   }
 
   const capabilities = check_wasm_capabilities(module, availableCapabilities);
   if (capabilities.err) {
-    return Promise.reject(Err(capabilities.unwrap()));
+    return capabilities;
   }
 
-  return Promise.resolve(Ok(undefined));
+  return Ok(undefined);
 }
 
 export function check_wasm_memories(module: WebAssembly.Module): Result<void, string> {
@@ -165,6 +165,9 @@ if (require.main === module) {
     command.action(async (path: string) => {
       await check_contract(path, []);
     });
+
+    command.argument('-c, --capabilities <capabilities>', 'List of capabilities');
+    command.description('Check the contract with capabilities');
 
     program.parse(process.argv);
   } catch (error) {
